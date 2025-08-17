@@ -6,7 +6,7 @@ Tech: **Node/Express + MongoDB + JWT** (backend) and **React + Tailwind** (front
 ---
 
 ## Public URLs (Production)
- http://54.66.59.137
+ http://https://3.107.185.222
 
 **Project demo account (for graders):**
 

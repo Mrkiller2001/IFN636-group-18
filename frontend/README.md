@@ -6,10 +6,7 @@ Tech: **Node/Express + MongoDB + JWT** (backend) and **React + Tailwind** (front
 ---
 
 ## Public URLs (Production)
-
-> Replace these with your live links if deployed.
-
- `https://<your-frontend-domain>`
+ http://54.66.59.137
 
 **Project demo account (for graders):**
 
@@ -269,14 +266,3 @@ A GitHub Actions workflow (`Backend CI`) installs deps, runs backend tests (Moch
 * **React/Recharts hook error** → ensure only one `react`/`react-dom` version (run `npm ls react react-dom` in `frontend`).
 * For production, set `REACT_APP_API_BASE` to your deployed API base.
 
----
-
-## License
-
-MIT (or your preferred license)
-
----
-
-### Credits
-
-Built for the “Schedule pickups, optimize routes, track bin levels via sensors” assignment.

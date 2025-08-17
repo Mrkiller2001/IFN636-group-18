@@ -7,7 +7,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 
 // Controllers & Model under test
-const Bin = require('../src/models/Bin'); // adjust path if your model is elsewhere
+const Bin = require('../models/Bin'); // adjust path if your model is elsewhere
 const {
   getBins, addBin, getBin, updateBin, deleteBin, getBinsLatest
 } = require('../src/controllers/binsController'); // adjust path if needed

@@ -32,9 +32,6 @@ jobs:
           corepack enable
           yarn --version
 
-      # ⛔ Remove this whole "Print Env Secret" step
-      # Secrets should NOT be echoed to logs.
-
       - name: Show disk usage before
         run: df -h
 

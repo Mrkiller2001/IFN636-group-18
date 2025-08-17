@@ -1,10 +1,14 @@
 const chai = require('chai');
 const chaiHttp = require('chai-http');
-const sinon = require('sinon');
+const http = require('http');
+const app = require('../server'); 
+const connectDB = require('../config/db');
 const mongoose = require('mongoose');
+const sinon = require('sinon');
 
 const { expect } = chai;
-chai.use(chaiHttp);
+chai.use(chaiHttp.default || chaiHttp);let server;
+let port;
 
 // Controllers & Model under test
 const Bin = require('../models/Bin'); // adjust path if your model is elsewhere

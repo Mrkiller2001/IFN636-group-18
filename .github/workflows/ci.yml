@@ -5,7 +5,6 @@ name: Backend CI
     branches: [main]
   workflow_dispatch: {}
 
-# optional but nice: avoid overlapping runs on same ref
 concurrency:
   group: backend-ci-${{ github.ref }}
   cancel-in-progress: true
@@ -29,19 +28,20 @@ jobs:
           clean: true
           fetch-depth: 0
 
-      - name: Setup Node.js
+      - name: Setup Node.js (cache npm)
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: yarn
+          cache: npm
+          # Use a resilient glob so caching works even if only one lockfile exists
           cache-dependency-path: |
-            backend/yarn.lock
-            frontend/yarn.lock
+            **/package-lock.json
 
-      - name: Enable Corepack (use project Yarn)
+      - name: List lockfiles (debug)
         run: |
-          corepack enable
-          yarn --version
+          echo "package-lock.json files:"
+          git ls-files '**/package-lock.json' || true
+          find . -maxdepth 3 -name package-lock.json
 
       - name: Show disk usage before
         run: df -h
@@ -49,27 +49,10 @@ jobs:
       - name: Stop pm2 (if you REALLY need this)
         run: pm2 stop all || true
 
+      # ----- Backend -----
       - name: Install Backend Dependencies
         working-directory: ./backend
-        run: |
-          if yarn -v | grep -q '^1\.'; then
-            yarn install --frozen-lockfile
-          else
-            yarn install --immutable
-          fi
-
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
-        run: |
-          if yarn -v | grep -q '^1\.'; then
-            yarn install --frozen-lockfile
-          else
-            yarn install --immutable
-          fi
-
-      - name: Build Frontend
-        working-directory: ./frontend
-        run: yarn build
+        run: npm ci
 
       - name: Run Backend Tests
         working-directory: ./backend
@@ -77,7 +60,7 @@ jobs:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           PORT: ${{ secrets.PORT }}
-        run: yarn test
+        run: npm test
 
       - name: Create backend .env (no logging secrets)
         working-directory: ./backend
@@ -92,17 +75,25 @@ jobs:
             echo "PORT=$PORT"
           } > .env
 
+      # ----- Frontend -----
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      # Optional: pm2 control (usually belongs in CD, not CI)
       - name: Start/Restart pm2 (optional)
         run: |
           pm2 start all || true
           pm2 restart all || true
 
-      - name: Cleanup caches and artifacts
+      # Keep the self-hosted box clean (don’t nuke npm cache, that’s what we’re caching!)
+      - name: Cleanup heavy artifacts
         if: always()
         run: |
-          yarn cache clean || true
-          rm -rf ~/.cache/yarn ~/.yarn || true
-          npm cache clean --force || true
           rm -rf backend/node_modules frontend/node_modules frontend/build || true
           pm2 flush || true
 

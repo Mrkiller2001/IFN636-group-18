@@ -1,6 +1,7 @@
 import axiosInstance from '../axiosConfig';
 import { useAuth } from '../context/AuthContext';
 import FillBadge from './FillBadge';
+import { Link } from 'react-router-dom';
 
 export default function BinList({ bins, setBins, setEditingBin }) {
   const { user } = useAuth();
@@ -28,7 +29,7 @@ export default function BinList({ bins, setBins, setEditingBin }) {
             <th className="px-4 py-3">Fill</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Last Reading</th>
-            <th className="px-4 py-3 w-40">Actions</th>
+            <th className="px-4 py-3 w-50">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -47,6 +48,9 @@ export default function BinList({ bins, setBins, setEditingBin }) {
                 {b.latestReadingAt ? new Date(b.latestReadingAt).toLocaleString() : '-'}
               </td>
               <td className="px-4 py-3">
+                <Link to={`/bins/${b._id}/history`} className="mr-2 px-3 py-1 rounded border hover:bg-gray-50">
+                History
+                </Link>
                 <button
                   onClick={() => setEditingBin(b)}
                   className="mr-2 px-3 py-1 rounded border hover:bg-gray-50"

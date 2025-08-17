@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Bins from './pages/Bins';
+import BinHistoryPage from './pages/BinHistory';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/bins" element={<Bins />} />
+        <Route path="/bins/:id/history" element={<BinHistoryPage />} />
       </Routes>
     </Router>
   );

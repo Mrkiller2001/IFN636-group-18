@@ -1,11 +1,3 @@
-name: Backend CI
-
-on:
-  push:
-    branches:
-      - main  # Trigger CI on pushes to the main branch
-
-
 jobs:
   test:
     name: Run Tests
@@ -13,68 +5,107 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22] # Test on multiple Node.js versions
+        node-version: [22]
 
-
-    environment: MONGO_URI
+    # If you intended to use a GitHub Environment, keep 'environment: <env-name>'
+    # Otherwise remove this line. It does NOT set env vars.
+    # environment: production
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code (clean)
+        uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 0
 
-    # Set up Node.js
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
+          cache-dependency-path: |
+            backend/yarn.lock
+            frontend/yarn.lock
 
-    - name: Print Env Secret
+      - name: Enable Corepack (use project Yarn)
+        run: |
+          corepack enable
+          yarn --version
 
-      env:
-        MONGO_URI: ${{ secrets.MONGO_URI }}
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        PORT: ${{ secrets.PORT }}
-      run: | 
-        echo "Secret 1 is: $MONGO_URI"
-        echo "Secret 2 is: $JWT_SECRET"
-        echo "Secret 3 is: $PORT"
-      
-    - run: pm2 stop all
+      # ⛔ Remove this whole "Print Env Secret" step
+      # Secrets should NOT be echoed to logs.
 
-    # Install dependencies for backend
-    - name: Install Backend Dependencies
-      working-directory: ./backend
-      run: | 
-       npm install --global yarn
-       yarn --version
-       yarn install
-      
-    # Install dependencies for frontend
-    - name: Install Frontend Dependencies
-      working-directory: ./frontend
-      run: |
-        df -h
-        sudo rm -rf ./build
-        yarn install
-        yarn run build
+      - name: Show disk usage before
+        run: df -h
 
+      - name: Stop pm2 (if you REALLY need this)
+        run: pm2 stop all || true
 
-    # Run backend tests
-    - name: Run Backend Tests
-      env:
-        MONGO_URI: ${{ secrets.MONGO_URI }}
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        PORT: ${{ secrets.PORT }}
-      working-directory: ./backend
-      run: npm test
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: |
+          # For Yarn v1: use --frozen-lockfile; for Yarn Berry: --immutable
+          yarn install --frozen-lockfile
 
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: |
+          yarn install --frozen-lockfile
 
-    - run: npm ci
-    - run: | 
-        cd ./backend
-        touch .env
-        echo "${{ secrets.PROD }}" > .env
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: |
+          yarn build
 
-    - run: pm2 start all
+      - name: Run Backend Tests
+        working-directory: ./backend
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: ${{ secrets.PORT }}
+        run: yarn test
 
-    - run: pm2 restart all
+      # If your app needs a .env for later steps, write it quietly (no echo)
+      - name: Create backend .env
+        working-directory: ./backend
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: ${{ secrets.PORT }}
+        run: |
+          {
+            echo "MONGO_URI=$MONGO_URI"
+            echo "JWT_SECRET=$JWT_SECRET"
+            echo "PORT=$PORT"
+          } > .env
+
+      # Remove npm ci and any mixed package manager steps.
+      # - run: npm ci  <-- DELETE THIS
+
+      # If you must, bring pm2 back (but it’s better in CD, not CI)
+      - name: Start/Restart pm2 (optional)
+        run: |
+          pm2 start all || true
+          pm2 restart all || true
+
+      # 🔻 Post-job cleanup to free disk on the self-hosted runner
+      - name: Cleanup caches and artifacts
+        if: always()
+        run: |
+          # Clean Yarn cache (global + project)
+          yarn cache clean || true
+          rm -rf ~/.cache/yarn || true
+          rm -rf ~/.yarn || true
+
+          # Clean npm cache just in case something pulled npm deps
+          npm cache clean --force || true
+
+          # Remove heavyweight folders created during the job
+          rm -rf backend/node_modules frontend/node_modules frontend/build || true
+
+          # Extra: delete leftover logs from pm2 for this repo
+          pm2 flush || true
+
+      - name: Show disk usage after
+        if: always()
+        run: df -h

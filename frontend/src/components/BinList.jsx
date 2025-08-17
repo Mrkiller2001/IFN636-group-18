@@ -18,6 +18,25 @@ export default function BinList({ bins, setBins, setEditingBin }) {
     }
   };
 
+const simulateFill = async (b, value = 85) => {
+  try {
+    await axiosInstance.post('/api/sensor-readings', {
+      binId: b._id,
+      fillPct: value,
+      batteryPct: 60
+    }, { headers: { Authorization: `Bearer ${user.token}` } });
+
+    // Update the row locally so you see it immediately
+    setBins(prev => prev.map(x => x._id === b._id
+      ? { ...x, latestFillPct: value, status: value >= 80 ? 'needs_pickup' : 'normal', latestReadingAt: new Date().toISOString() }
+      : x
+    ));
+  } catch (e) {
+    alert(e?.response?.data?.message || e.message || 'Failed to add reading');
+  }
+};
+
+
   return (
     <div className="overflow-x-auto bg-white shadow rounded">
       <table className="min-w-full">
@@ -56,6 +75,12 @@ export default function BinList({ bins, setBins, setEditingBin }) {
                   className="mr-2 px-3 py-1 rounded border hover:bg-gray-50"
                 >
                   Edit
+                </button>
+                <button
+                onClick={() => simulateFill(b, 85)}
+                className="mr-2 px-3 py-1 rounded border hover:bg-gray-50"
+                >
+                Mark 85%
                 </button>
                 <button
                   onClick={() => remove(b._id)}

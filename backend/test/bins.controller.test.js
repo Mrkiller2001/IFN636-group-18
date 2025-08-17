@@ -10,7 +10,7 @@ chai.use(chaiHttp);
 const Bin = require('../models/Bin'); // adjust path if your model is elsewhere
 const {
   getBins, addBin, getBin, updateBin, deleteBin, getBinsLatest
-} = require('../src/controllers/binsController'); // adjust path if needed
+} = require('../controllers/binsController'); // adjust path if needed
 
 // Reusable fake res
 function makeRes() {

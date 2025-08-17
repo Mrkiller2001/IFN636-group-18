@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   test:
-    name: Run Tests
+    name: Build, Test, Deploy
     runs-on: self-hosted
 
     strategy:
@@ -22,7 +22,7 @@ jobs:
         node-version: [22]
 
     steps:
-      - name: Checkout Code (clean)
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
           clean: true
@@ -33,23 +33,16 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
-          # Use a resilient glob so caching works even if only one lockfile exists
           cache-dependency-path: |
             **/package-lock.json
-
-      - name: List lockfiles (debug)
-        run: |
-          echo "package-lock.json files:"
-          git ls-files '**/package-lock.json' || true
-          find . -maxdepth 3 -name package-lock.json
 
       - name: Show disk usage before
         run: df -h
 
-      - name: Stop pm2 (if you REALLY need this)
+      - name: Stop pm2 (optional)
         run: pm2 stop all || true
 
-      # ----- Backend -----
+      # ---------- Backend ----------
       - name: Install Backend Dependencies
         working-directory: ./backend
         run: npm ci
@@ -62,20 +55,7 @@ jobs:
           PORT: ${{ secrets.PORT }}
         run: npm test
 
-      - name: Create backend .env (no logging secrets)
-        working-directory: ./backend
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          PORT: ${{ secrets.PORT }}
-        run: |
-          {
-            echo "MONGO_URI=$MONGO_URI"
-            echo "JWT_SECRET=$JWT_SECRET"
-            echo "PORT=$PORT"
-          } > .env
-
-      # ----- Frontend -----
+      # ---------- Frontend ----------
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: npm ci
@@ -84,18 +64,101 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      # Optional: pm2 control (usually belongs in CD, not CI)
-      - name: Start/Restart pm2 (optional)
+      # ---------- Deploy to persistent directory ----------
+      - name: Deploy to /home/ubuntu/www/app/current
+        env:
+          APP_ROOT: /home/ubuntu/www/app/current
         run: |
-          pm2 start all || true
-          pm2 restart all || true
+          set -euo pipefail
+          mkdir -p "$APP_ROOT/backend" "$APP_ROOT/frontend"
+          # Sync backend source
+          rsync -a --delete backend/  "$APP_ROOT/backend/"
+          # Sync built frontend assets
+          rsync -a --delete frontend/build/ "$APP_ROOT/frontend/build/"
 
-      # Keep the self-hosted box clean (don’t nuke npm cache, that’s what we’re caching!)
-      - name: Cleanup heavy artifacts
-        if: always()
+      - name: Install production deps where PM2 runs
+        working-directory: /home/ubuntu/www/app/current/backend
+        run: npm ci --omit=dev
+
+      # Create PM2 ecosystem file dynamically and (re)start with env
+      - name: Start/Restart PM2 (backend)
+        working-directory: /home/ubuntu/www/app/current/backend
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: ${{ secrets.PORT }}
         run: |
+          set -euo pipefail
+          # Try to detect an entry file if no npm start script is present
+          ENTRY=""
+          if grep -q '"start"' package.json; then
+            # We'll use "npm start" via PM2
+            :
+          else
+            for f in server.js app.js index.js dist/index.js; do
+              if [ -f "$f" ]; then ENTRY="$f"; break; fi
+            done
+            if [ -z "$ENTRY" ]; then
+              echo "❌ Could not determine backend entry file. Add a start script or create server.js."
+              exit 1
+            fi
+          fi
+
+          cat > ecosystem.config.js <<'EOF'
+          module.exports = {
+            apps: [{
+              name: "backend",
+              cwd: process.cwd(),
+              // If you have a start script we use npm, else we replace script below with the entry file.
+              script: "npm",
+              args: "start",
+              interpreter: "none",
+              env: {
+                PORT: process.env.PORT,
+                MONGO_URI: process.env.MONGO_URI,
+                JWT_SECRET: process.env.JWT_SECRET
+              }
+            }]
+          }
+          EOF
+
+          if [ -n "$ENTRY" ]; then
+            # Replace npm start with direct node entry if no start script
+            node -e "
+              const fs=require('fs');
+              const cfg=require('./ecosystem.config.js');
+              cfg.apps[0].script='$ENTRY';
+              cfg.apps[0].args=undefined;
+              cfg.apps[0].interpreter='node';
+              fs.writeFileSync('ecosystem.config.js','module.exports='+JSON.stringify(cfg,null,2));
+            "
+          fi
+
+          # Start or reload with updated env
+          pm2 startOrReload ecosystem.config.js --update-env
+
+      # ---------- Cleanup runner workspace safely ----------
+      - name: Cleanup workspace & caches
+        if: always()
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+          RUNNER_TOOL_CACHE: ${{ runner.tool_cache }}
+        run: |
+          set -euo pipefail
+          # We deployed to a persistent dir, so it's safe to clean the workspace
           rm -rf backend/node_modules frontend/node_modules frontend/build || true
+
+          # Tidy GitHub runner temp/cache (older files only)
+          if [ -n "${RUNNER_TEMP:-}" ] && [ -d "$RUNNER_TEMP" ]; then
+            find "$RUNNER_TEMP" -mindepth 1 -mtime +3 -print -exec rm -rf {} + || true
+          fi
+          if [ -n "${RUNNER_TOOL_CACHE:-}" ] && [ -d "$RUNNER_TOOL_CACHE" ]; then
+            find "$RUNNER_TOOL_CACHE" -mindepth 1 -maxdepth 1 -mtime +14 -print -exec rm -rf {} + || true
+          fi
+
+          # PM2 logs can grow a lot
           pm2 flush || true
+          df -h
 
       - name: Show disk usage after
         if: always()

@@ -1,0 +1,76 @@
+import axiosInstance from '../axiosConfig';
+import { useAuth } from '../context/AuthContext';
+import FillBadge from './FillBadge';
+
+export default function BinList({ bins, setBins, setEditingBin }) {
+  const { user } = useAuth();
+
+  const remove = async (id) => {
+    if (!window.confirm('Delete this bin?')) return;
+    try {
+      await axiosInstance.delete(`/api/bins/${id}`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      setBins((prev) => prev.filter((b) => b._id !== id));
+    } catch (err) {
+      alert(err?.response?.data?.message || err.message || 'Delete failed');
+    }
+  };
+
+  return (
+    <div className="overflow-x-auto bg-white shadow rounded">
+      <table className="min-w-full">
+        <thead className="bg-gray-50">
+          <tr className="text-left text-sm text-gray-600">
+            <th className="px-4 py-3">Name</th>
+            <th className="px-4 py-3">Type</th>
+            <th className="px-4 py-3">Capacity (L)</th>
+            <th className="px-4 py-3">Fill</th>
+            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">Last Reading</th>
+            <th className="px-4 py-3 w-40">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bins.map((b) => (
+            <tr key={b._id} className="border-t text-sm">
+              <td className="px-4 py-3">{b.name}</td>
+              <td className="px-4 py-3 capitalize">{b.type}</td>
+              <td className="px-4 py-3">{b.capacityLitres}</td>
+              <td className="px-4 py-3">
+                <FillBadge value={b.latestFillPct} />
+              </td>
+              <td className={`px-4 py-3 ${b.status === 'needs_pickup' ? 'text-red-600 font-medium' : ''}`}>
+                {b.status}
+              </td>
+              <td className="px-4 py-3">
+                {b.latestReadingAt ? new Date(b.latestReadingAt).toLocaleString() : '-'}
+              </td>
+              <td className="px-4 py-3">
+                <button
+                  onClick={() => setEditingBin(b)}
+                  className="mr-2 px-3 py-1 rounded border hover:bg-gray-50"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => remove(b._id)}
+                  className="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+          {!bins.length && (
+            <tr>
+              <td colSpan="7" className="px-4 py-6 text-center text-gray-500">
+                No bins yet.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}

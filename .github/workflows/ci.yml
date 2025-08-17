@@ -1,3 +1,18 @@
+name: Backend CI
+
+'on':
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# optional but nice: avoid overlapping runs on same ref
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Run Tests
@@ -6,10 +21,6 @@ jobs:
     strategy:
       matrix:
         node-version: [22]
-
-    # If you intended to use a GitHub Environment, keep 'environment: <env-name>'
-    # Otherwise remove this line. It does NOT set env vars.
-    # environment: production
 
     steps:
       - name: Checkout Code (clean)
@@ -22,7 +33,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
+          cache: yarn
           cache-dependency-path: |
             backend/yarn.lock
             frontend/yarn.lock
@@ -41,18 +52,24 @@ jobs:
       - name: Install Backend Dependencies
         working-directory: ./backend
         run: |
-          # For Yarn v1: use --frozen-lockfile; for Yarn Berry: --immutable
-          yarn install --frozen-lockfile
+          if yarn -v | grep -q '^1\.'; then
+            yarn install --frozen-lockfile
+          else
+            yarn install --immutable
+          fi
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
-          yarn install --frozen-lockfile
+          if yarn -v | grep -q '^1\.'; then
+            yarn install --frozen-lockfile
+          else
+            yarn install --immutable
+          fi
 
       - name: Build Frontend
         working-directory: ./frontend
-        run: |
-          yarn build
+        run: yarn build
 
       - name: Run Backend Tests
         working-directory: ./backend
@@ -62,8 +79,7 @@ jobs:
           PORT: ${{ secrets.PORT }}
         run: yarn test
 
-      # If your app needs a .env for later steps, write it quietly (no echo)
-      - name: Create backend .env
+      - name: Create backend .env (no logging secrets)
         working-directory: ./backend
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -76,31 +92,18 @@ jobs:
             echo "PORT=$PORT"
           } > .env
 
-      # Remove npm ci and any mixed package manager steps.
-      # - run: npm ci  <-- DELETE THIS
-
-      # If you must, bring pm2 back (but it’s better in CD, not CI)
       - name: Start/Restart pm2 (optional)
         run: |
           pm2 start all || true
           pm2 restart all || true
 
-      # 🔻 Post-job cleanup to free disk on the self-hosted runner
       - name: Cleanup caches and artifacts
         if: always()
         run: |
-          # Clean Yarn cache (global + project)
           yarn cache clean || true
-          rm -rf ~/.cache/yarn || true
-          rm -rf ~/.yarn || true
-
-          # Clean npm cache just in case something pulled npm deps
+          rm -rf ~/.cache/yarn ~/.yarn || true
           npm cache clean --force || true
-
-          # Remove heavyweight folders created during the job
           rm -rf backend/node_modules frontend/node_modules frontend/build || true
-
-          # Extra: delete leftover logs from pm2 for this repo
           pm2 flush || true
 
       - name: Show disk usage after

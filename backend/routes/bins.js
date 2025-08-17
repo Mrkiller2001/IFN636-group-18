@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { protect } = require('../middleware/authmiddleware');
+const { protect } = require('../middleware/authMiddleware');
 const {
   getBins, addBin, getBin, updateBin, deleteBin, getBinsLatest
 } = require('../controllers/binsController');

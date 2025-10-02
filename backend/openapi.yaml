@@ -4,7 +4,7 @@ info:
   description: API for managing smart garbage bins, users, and collection routes.
   version: 1.0.0
 servers:
-  - url: http://localhost:5000/api
+  - url: http://localhost:5001/api
     description: Local development server
 
 components:

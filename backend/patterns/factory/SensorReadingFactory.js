@@ -11,14 +11,13 @@ const SensorReading = require('../../models/SensorReading');
 
 class SensorReadingFactory {
   static create({ userId, binId, fillPct, batteryPct, takenAt }) {
-    // For test compatibility, return a plain object with all fields
-    return {
+    return new SensorReading({
       userId,
       binId,
       fillPct,
       batteryPct,
       takenAt: takenAt ? new Date(takenAt) : new Date()
-    };
+    });
   }
 }
 

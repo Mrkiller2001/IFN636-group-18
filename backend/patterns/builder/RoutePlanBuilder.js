@@ -48,8 +48,8 @@ class RoutePlanBuilder {
   }
 
   build() {
-    // Return a plain object for test compatibility
-    return { ...this.routePlan };
+  // Return a Mongoose model instance for persistence
+  return new RoutePlan({ ...this.routePlan });
   }
 }
 

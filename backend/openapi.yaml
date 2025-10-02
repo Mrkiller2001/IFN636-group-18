@@ -1,0 +1,412 @@
+openapi: 3.0.3
+info:
+  title: Garbage Collection Manager API
+  description: API for managing smart garbage bins, users, and collection routes.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api
+    description: Local development server
+
+components:
+  schemas:
+    Location:
+      type: object
+      properties:
+        lat:
+          type: number
+          format: float
+          description: Latitude
+        lng:
+          type: number
+          format: float
+          description: Longitude
+      required: [lat, lng]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the user.
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [Admin, Member, Dispatcher]
+        university:
+          type: string
+        address:
+          type: string
+
+    Bin:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [general, recycling, compost]
+        capacityLitres:
+          type: number
+        location:
+          $ref: '#/components/schemas/Location'
+        status:
+          type: string
+          enum: [normal, needs_pickup, out_of_service]
+        latestFillPct:
+          type: number
+        latestBatteryPct:
+          type: number
+        installedAt:
+          type: string
+          format: date-time
+
+    SensorReading:
+      type: object
+      properties:
+        _id:
+          type: string
+        binId:
+          type: string
+        userId:
+          type: string
+        fillPct:
+          type: number
+        batteryPct:
+          type: number
+        takenAt:
+          type: string
+          format: date-time
+
+    RouteStop:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the bin.
+        name:
+          type: string
+          description: The name of the bin.
+        location:
+          $ref: '#/components/schemas/Location'
+        distanceFromPrevKm:
+          type: number
+
+    RoutePlan:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        depot:
+          $ref: '#/components/schemas/Location'
+        threshold:
+          type: number
+        maxStops:
+          type: integer
+        totalDistanceKm:
+          type: number
+        status:
+          type: string
+          enum: [planned, in_progress, completed, cancelled]
+        stops:
+          type: array
+          items:
+            $ref: '#/components/schemas/RouteStop'
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: [] # This endpoint is public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+              required: [name, email, password]
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/User'
+                  - type: object
+                    properties:
+                      token: { type: string }
+        '400':
+          description: Bad Request (e.g., missing fields)
+        '409':
+          description: Conflict (e.g., email already in use)
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in a user
+      security: [] # This endpoint is public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+              required: [email, password]
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/User'
+                  - type: object
+                    properties:
+                      token: { type: string }
+        '401':
+          description: Unauthorized (invalid credentials)
+
+  /auth/profile:
+    get:
+      tags: [Auth]
+      summary: Get current user's profile
+      responses:
+        '200':
+          description: User profile data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+    put:
+      tags: [Auth]
+      summary: Update current user's profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                university: { type: string }
+                address: { type: string }
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /bins:
+    get:
+      tags: [Bins]
+      summary: Get all bins for the current user
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string }
+          description: Filter by bin type
+        - in: query
+          name: status
+          schema: { type: string }
+          description: Filter by bin status
+      responses:
+        '200':
+          description: A list of bins
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bin'
+    post:
+      tags: [Bins]
+      summary: Add a new bin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                type: { type: string }
+                capacityLitres: { type: number }
+                location: { $ref: '#/components/schemas/Location' }
+                template: { type: object, description: "Optional template to clone from (Prototype Pattern)" }
+      responses:
+        '201':
+          description: Bin created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bin'
+
+  /bins/{id}:
+    get:
+      tags: [Bins]
+      summary: Get a single bin by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Bin data
+          content: { application/json: { schema: { $ref: '#/components/schemas/Bin' } } }
+        '404':
+          description: Bin not found
+    put:
+      tags: [Bins]
+      summary: Update a bin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bin'
+      responses:
+        '200':
+          description: Bin updated
+          content: { application/json: { schema: { $ref: '#/components/schemas/Bin' } } }
+    delete:
+      tags: [Bins]
+      summary: Delete a bin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Bin deleted
+          content: { application/json: { schema: { properties: { message: { type: string } } } } }
+
+  /sensor-readings:
+    post:
+      tags: [Sensors]
+      summary: Add a new sensor reading
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                binId: { type: string }
+                fillPct: { type: number }
+                batteryPct: { type: number }
+              required: [binId, fillPct]
+      responses:
+        '201':
+          description: Reading created
+          content: { application/json: { schema: { $ref: '#/components/schemas/SensorReading' } } }
+
+  /routes:
+    post:
+      tags: [Route Planning]
+      summary: Create a new collection route plan
+      description: Requires Admin or Dispatcher role.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                depot: { $ref: '#/components/schemas/Location' }
+                threshold: { type: number, default: 80 }
+                maxStops: { type: integer }
+                strategyName: { type: string, enum: [ShortestDistance, OverflowAware], default: ShortestDistance }
+              required: [depot]
+      responses:
+        '201':
+          description: Route plan created successfully
+          content: { application/json: { schema: { $ref: '#/components/schemas/RoutePlan' } } }
+        '400':
+          description: Bad Request (e.g., no bins to collect)
+        '403':
+          description: Forbidden (user role not authorized)
+    get:
+      tags: [Route Planning]
+      summary: List all route plans for the user
+      responses:
+        '200':
+          description: A list of route plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RoutePlan'
+
+  /routes/{id}:
+    get:
+      tags: [Route Planning]
+      summary: Get a single route plan by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Route plan data
+          content: { application/json: { schema: { $ref: '#/components/schemas/RoutePlan' } } }
+        '404':
+          description: Route plan not found
+    delete:
+      tags: [Route Planning]
+      summary: Delete a route plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Route plan deleted
+          content: { application/json: { schema: { properties: { message: { type: string } } } } }

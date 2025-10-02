@@ -10,14 +10,20 @@
     "prod": "node server.js"
   },
   "dependencies": {
+    "axios": "^1.12.2",
     "bcrypt": "^5.0.1",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^8.5.1",
+    "mongodb": "^6.20.0",
     "mongoose": "^6.0.14",
     "request": "^2.88.2",
-    "task-manager": "file:.."
+    "swagger-ui-express": "^5.0.1",
+    "task-manager": "file:..",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "chai": "^5.2.1",

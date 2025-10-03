@@ -1,0 +1,573 @@
+{
+  "info": {
+    "name": "Garbage Collection Manager API",
+    "description": "Complete API collection for the Smart Waste Collection system with IoT sensors, route optimization, and fleet management.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5001/api",
+      "type": "string"
+    },
+    {
+      "key": "production_url",
+      "value": "http://3.107.185.222/api",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bin_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "route_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "truck_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"university\": \"Test University\",\n  \"address\": \"123 Test Street\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.token);",
+                  "    pm.collectionVariables.set('user_id', response.user.id);",
+                  "    console.log('JWT Token set:', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"stealth959@hotmail.co\",\n  \"password\": \"1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"university\": \"Updated University\",\n  \"address\": \"Updated Address\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🗂️ Bin Management",
+      "item": [
+        {
+          "name": "Get All Bins",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bins",
+              "host": ["{{base_url}}"],
+              "path": ["bins"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bins with Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bins?type=general&status=needs_pickup",
+              "host": ["{{base_url}}"],
+              "path": ["bins"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "general"
+                },
+                {
+                  "key": "status",
+                  "value": "needs_pickup"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create New Bin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('bin_id', response._id);",
+                  "    console.log('Bin ID set:', response._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Bin\",\n  \"type\": \"general\",\n  \"capacityLitres\": 120,\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-73.985130, 40.758896]\n  },\n  \"address\": \"Times Square, New York, NY 10036\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bins",
+              "host": ["{{base_url}}"],
+              "path": ["bins"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bin by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bins/{{bin_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["bins", "{{bin_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Bin",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Bin Name\",\n  \"status\": \"needs_pickup\",\n  \"capacityLitres\": 150\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bins/{{bin_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["bins", "{{bin_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Bin",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bins/{{bin_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["bins", "{{bin_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 IoT Sensor Readings",
+      "item": [
+        {
+          "name": "Submit Sensor Reading",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"binId\": \"{{bin_id}}\",\n  \"fillPct\": 85,\n  \"batteryPct\": 92,\n  \"takenAt\": \"2025-10-03T10:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/sensor-readings",
+              "host": ["{{base_url}}"],
+              "path": ["sensor-readings"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bin Sensor History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sensor-readings/bin/{{bin_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["sensor-readings", "bin", "{{bin_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🚛 Route Planning",
+      "item": [
+        {
+          "name": "Create Route Plan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('route_id', response._id);",
+                  "    console.log('Route ID set:', response._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Morning Collection Route\",\n  \"depot\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-73.994033, 40.746899]\n  },\n  \"threshold\": 75,\n  \"maxStops\": 10,\n  \"scheduledDate\": \"2025-10-04T08:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/routes",
+              "host": ["{{base_url}}"],
+              "path": ["routes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Routes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/routes",
+              "host": ["{{base_url}}"],
+              "path": ["routes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/routes/{{route_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "{{route_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Route",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/routes/{{route_id}}/complete",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "{{route_id}}", "complete"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🚚 Fleet Management",
+      "item": [
+        {
+          "name": "Get All Trucks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/trucks",
+              "host": ["{{base_url}}"],
+              "path": ["trucks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create New Truck",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('truck_id', response._id);",
+                  "    console.log('Truck ID set:', response._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"licensePlate\": \"NYC-001\",\n  \"capacity\": 1500,\n  \"status\": \"Available\",\n  \"fuelLevel\": 85,\n  \"driverId\": \"DRV001\",\n  \"currentLocation\": {\n    \"address\": \"Manhattan Depot, New York, NY 10001\",\n    \"coordinates\": [-73.994033, 40.746899]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trucks",
+              "host": ["{{base_url}}"],
+              "path": ["trucks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Truck",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"In Route\",\n  \"fuelLevel\": 75\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trucks/{{truck_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["trucks", "{{truck_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔧 System Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

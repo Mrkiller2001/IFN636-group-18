@@ -20,6 +20,11 @@ A production-ready enterprise waste management system with IoT sensor integratio
 - **Email:** `stealth959@hotmail.co`
 - **Password:** `1234`
 
+**📋 API Testing Collections:**
+- **[Postman Collection](./Garbage-Collection-Manager-API.postman_collection.json)** - Complete API endpoints
+- **[Environment File](./Garbage-Collection-Manager.postman_environment.json)** - Variables for testing  
+- **[Testing Guide](./API-TESTING-GUIDE.md)** - Comprehensive testing documentation
+
 > Demo account provides full access to all features including interactive maps, route planning, and IoT sensor simulation.
 
 ---

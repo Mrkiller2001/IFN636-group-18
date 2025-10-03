@@ -1,13 +1,11 @@
 const mongoose = require('mongoose');
 
-const SensorReadingSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  binId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bin', required: true, index: true },
-  fillPct: { type: Number, required: true, min: 0, max: 100 },
+const sensorReadingSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true, required: true },
+  binId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bin', index: true, required: true },
+  fillPct: { type: Number, min: 0, max: 100, required: true },
   batteryPct: { type: Number, min: 0, max: 100 },
   takenAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-SensorReadingSchema.index({ binId: 1, takenAt: -1 });
-
-module.exports = mongoose.model('SensorReading', SensorReadingSchema);
+module.exports = mongoose.model('SensorReading', sensorReadingSchema);

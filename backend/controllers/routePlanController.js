@@ -13,15 +13,23 @@ const createRoutePlan = async (req, res) => {
       return res.status(400).json({ message: 'Valid depot {lat,lng} is required' });
     }
 
-    const th = Number(threshold);
-    const cap = Number.isFinite(Number(maxStops)) ? Number(maxStops) : Infinity;
+      // Use Builder Pattern to construct RoutePlan
+      const RoutePlanBuilder = require('../patterns/builder/RoutePlanBuilder');
+      const builder = new RoutePlanBuilder()
+        .setDepot(depot.lat, depot.lng)
+ .setThreshold(threshold)
+ .setMaxStops(maxStops)
+        .setUserId(userId);
+
+      let current = { lat: depot.lat, lng: depot.lng };
+      // let stops = []; // Removed duplicate declaration
 
     // candidate bins
     const bins = await Bin.find({
       userId,
       $or: [
         { status: 'needs_pickup' },
-        { latestFillPct: { $gte: th } }
+        { latestFillPct: { $gte: threshold } }
       ]
     });
 
@@ -37,41 +45,29 @@ const createRoutePlan = async (req, res) => {
     }));
 
     const stops = [];
-    let current = { lat: depot.lat, lng: depot.lng };
     let total = 0;
 
-    while (remaining.length && stops.length < cap) {
+    while (remaining.length && (!maxStops || stops.length < maxStops)) {
       // find nearest
       let idx = 0;
       let best = haversineKm(current, remaining[0].location);
+      let bestDist = best;
       for (let i = 1; i < remaining.length; i++) {
         const d = haversineKm(current, remaining[i].location);
-        if (d < best) { best = d; idx = i; }
+        if (d < bestDist) {
+          bestDist = d;
+          idx = i;
+        }
       }
       const next = remaining.splice(idx, 1)[0];
-      stops.push({
-        ...next,
-        distanceFromPrevKm: Number(best.toFixed(3))
-      });
-      total += best;
+      const stop = { ...next, distanceFromPrevKm: Number(bestDist.toFixed(3)) };
+      builder.addStop(stop);
+      stops.push(stop);
       current = next.location;
+      total += bestDist;
     }
-
-    // include return to depot in total
-    const back = haversineKm(current, depot);
-    total += back;
-
-    const plan = await RoutePlan.create({
-      userId,
-      depot,
-      threshold: th,
-      maxStops: Number.isFinite(cap) ? cap : undefined,
-      totalDistanceKm: Number(total.toFixed(3)),
-      status: 'planned',
-      stops
-    });
-
-    res.status(201).json(plan);
+      const routePlan = await builder.build().save();
+    res.status(201).json(routePlan);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

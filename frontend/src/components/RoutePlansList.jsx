@@ -35,7 +35,7 @@ export default function RoutePlansList({ plans, setPlans, reload }) {
             <tr key={p._id} className="border-t">
               <td className="px-4 py-2">{new Date(p.createdAt).toLocaleString()}</td>
               <td className="px-4 py-2">{p.stops?.length ?? 0}</td>
-              <td className="px-4 py-2">{(p.totalDistanceKm ?? 0).toFixed?.(3) ?? p.totalDistanceKm}</td>
+              <td className="px-4 py-2">{typeof p.totalDistanceKm === 'number' ? p.totalDistanceKm.toFixed(3) : '0.000'}</td>
               <td className="px-4 py-2">{p.threshold}%</td>
               <td className="px-4 py-2 capitalize">{p.status}</td>
               <td className="px-4 py-2">

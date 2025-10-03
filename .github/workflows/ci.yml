@@ -19,14 +19,13 @@ jobs:
 
     steps:
     - name: Checkout Code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
     # Set up Node.js
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'yarn'
 
     - name: Print Env Secret
 
@@ -62,7 +61,6 @@ jobs:
     # Run backend tests
     - name: Run Backend Tests
       env:
-        NODE_ENV: test
         MONGO_URI: ${{ secrets.MONGO_URI }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         PORT: ${{ secrets.PORT }}

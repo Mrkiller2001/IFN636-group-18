@@ -84,17 +84,6 @@ export default function MapComponent({
     return () => {
       if (mapInstance.current) {
         try {
-          // Clear all markers before removing map
-          [...markersRef.current, ...binMarkersRef.current, ...truckMarkersRef.current, ...routeMarkersRef.current].forEach(marker => {
-            if (marker && mapInstance.current) {
-              try {
-                mapInstance.current.removeLayer(marker);
-              } catch (error) {
-                // Ignore errors if layer is already removed
-              }
-            }
-          });
-          
           mapInstance.current.remove();
         } catch (error) {
           console.warn('Error cleaning up map:', error);
@@ -102,7 +91,7 @@ export default function MapComponent({
         mapInstance.current = null;
       }
     };
-  }, []);
+  }, [center, interactive, zoom]);
 
   // Update map center and zoom
   useEffect(() => {
@@ -110,25 +99,6 @@ export default function MapComponent({
       mapInstance.current.setView([center[1], center[0]], zoom);
     }
   }, [center, zoom]);
-
-  // Clear all markers
-  const clearMarkers = useCallback(() => {
-    if (mapInstance.current) {
-      [...markersRef.current, ...binMarkersRef.current, ...truckMarkersRef.current, ...routeMarkersRef.current].forEach(marker => {
-        if (marker && mapInstance.current) {
-          try {
-            mapInstance.current.removeLayer(marker);
-          } catch (error) {
-            // Ignore errors if layer is already removed
-          }
-        }
-      });
-      markersRef.current = [];
-      binMarkersRef.current = [];
-      truckMarkersRef.current = [];
-      routeMarkersRef.current = [];
-    }
-  }, []);
 
   // Clear specific marker types
   const clearBinMarkers = () => {

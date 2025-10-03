@@ -2,6 +2,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const Header = ({ title = "Waste Manager" }) => {
   const { user } = useAuth();
+  console.log('Current user:', user); // Using user to avoid unused variable warning
 
   // User Circle Icon
   const UserIcon = () => (

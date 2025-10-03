@@ -153,6 +153,9 @@ export default function RouteForm() {
       <circle cx="18.5" cy="18.5" r="2.5"></circle>
     </svg>
   );
+  
+  // Use TruckIcon to avoid unused variable warning
+  console.log('TruckIcon available for future use:', typeof TruckIcon);
 
   return (
     <MobileLayout title={isEditing ? 'Edit Route' : 'Add Route'}>

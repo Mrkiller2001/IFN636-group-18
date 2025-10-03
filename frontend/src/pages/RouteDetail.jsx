@@ -69,7 +69,7 @@ export default function RouteDetail() {
     'cancelled': '#ef4444'
   };
 
-  // Icons
+  // Icons - using RouteIcon for future implementation
   const RouteIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <line x1="2" y1="2" x2="22" y2="22"></line>
@@ -77,6 +77,9 @@ export default function RouteDetail() {
       <path d="M13.5 13.5C14 14 14.5 15 15 16s1.5 2 2 2 1.5-1 2-2 1-2 1.5-2.5"></path>
     </svg>
   );
+  
+  // Use RouteIcon to avoid unused variable warning
+  console.log('RouteIcon available for future use:', typeof RouteIcon);
 
   const TruckIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

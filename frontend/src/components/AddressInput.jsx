@@ -14,7 +14,7 @@ const AddressInput = ({ onAddressSelect, placeholder = "Search for an address...
     if (value !== undefined && value !== query) {
       setQuery(value);
     }
-  }, [value]);
+  }, [value, query]);
 
   const searchAddresses = async (searchQuery) => {
     if (searchQuery.length < 3) {

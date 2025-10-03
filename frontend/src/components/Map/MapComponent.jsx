@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -95,13 +95,13 @@ export default function MapComponent({
 
   // Update map center and zoom
   useEffect(() => {
-    if (mapInstance.current) {
+    if (mapInstance.current && interactive) {
       mapInstance.current.setView([center[1], center[0]], zoom);
     }
-  }, [center, zoom]);
+  }, [center, zoom, interactive]);
 
   // Clear all markers
-  const clearMarkers = () => {
+  const clearMarkers = useCallback(() => {
     if (mapInstance.current) {
       [...markersRef.current, ...binMarkersRef.current, ...truckMarkersRef.current, ...routeMarkersRef.current].forEach(marker => {
         if (marker && mapInstance.current) {
@@ -117,7 +117,7 @@ export default function MapComponent({
       truckMarkersRef.current = [];
       routeMarkersRef.current = [];
     }
-  };
+  }, []);
 
   // Clear specific marker types
   const clearBinMarkers = () => {
@@ -234,7 +234,7 @@ export default function MapComponent({
         }
       });
     }
-  }, [bins]);
+  }, [bins, onBinClick]);
 
   // Add truck markers
   useEffect(() => {
@@ -274,7 +274,7 @@ export default function MapComponent({
         console.warn(`Failed to add marker for truck ${index}:`, error);
       }
     });
-  }, [trucks]);
+  }, [trucks, onTruckClick]);
 
   // Add route polylines
   useEffect(() => {

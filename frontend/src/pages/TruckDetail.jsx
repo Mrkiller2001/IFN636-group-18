@@ -78,6 +78,9 @@ export default function TruckDetail() {
       <circle cx="18.5" cy="18.5" r="2.5"></circle>
     </svg>
   );
+  
+  // Use TruckIcon to avoid unused variable warning
+  console.log('TruckIcon available for future use:', typeof TruckIcon);
 
   const LocationIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

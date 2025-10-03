@@ -1,15 +1,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../axiosConfig';
-import BinForm from '../components/BinForm';
-import BinList from '../components/BinList';
+import MobileLayout from '../components/Layout/MobileLayout';
+import GreenButton from '../components/UI/GreenButton';
+import MapComponent from '../components/Map/MapComponent';
 
 export default function Bins() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [bins, setBins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
-  const [editingBin, setEditingBin] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -27,36 +29,53 @@ export default function Bins() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 15000); // refresh periodically (optional)
+    const t = setInterval(load, 15000);
     return () => clearInterval(t);
   }, [load]);
 
-  const handleSaved = () => load();
+  const handleBinClick = (bin) => {
+    navigate(`/bins/${bin._id}`);
+  };
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">Bins</h1>
-        <button
-          onClick={load}
-          className="text-sm bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700"
-        >
-          Refresh
-        </button>
+    <MobileLayout title="Waste Manager">
+      {/* Real Map showing all bins */}
+      <div className="h-[420px] relative">
+        <MapComponent
+          bins={bins}
+          trucks={[]}
+          routes={[]}
+          center={[-74.006, 40.7128]} // NYC center
+          zoom={13}
+          height="420px"
+          interactive={true}
+          onBinClick={handleBinClick}
+        />
+        
+        {/* ADD BIN Button */}
+        <div className="absolute top-4 right-4 z-10">
+          <GreenButton 
+            onClick={() => navigate('/bins/add')}
+            size="sm"
+            className="px-3"
+          >
+            ADD BIN
+          </GreenButton>
+        </div>
       </div>
 
-      <BinForm
-        editingBin={editingBin}
-        setEditingBin={setEditingBin}
-        onSaved={handleSaved}
-      />
-
-      {loading && <div className="text-gray-500">Loading…</div>}
-      {err && <div className="text-red-600 mb-3">Error: {err}</div>}
-
-      {!loading && (
-        <BinList bins={bins} setBins={setBins} setEditingBin={setEditingBin} />
+      {/* Loading/Error States */}
+      {loading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-gray-500">Loading bins...</div>
+        </div>
       )}
-    </div>
+      
+      {err && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-4 mt-4">
+          Error: {err}
+        </div>
+      )}
+    </MobileLayout>
   );
 }

@@ -1,4 +1,4 @@
-﻿// Free Geocoding service using OpenStreetMap Nominatim API
+// Free Geocoding service using OpenStreetMap Nominatim API
 // 100% free, no API key required, no rate limits for reasonable use
 
 export class GeocodingService {

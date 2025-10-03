@@ -84,6 +84,7 @@ export default function MapComponent({
     return () => {
       if (mapInstance.current) {
         try {
+          clearMarkers(); // Clear all markers before removing map
           mapInstance.current.remove();
         } catch (error) {
           console.warn('Error cleaning up map:', error);
@@ -95,10 +96,10 @@ export default function MapComponent({
 
   // Update map center and zoom
   useEffect(() => {
-    if (mapInstance.current && interactive) {
+    if (mapInstance.current) {
       mapInstance.current.setView([center[1], center[0]], zoom);
     }
-  }, [center, zoom, interactive]);
+  }, [center, zoom]);
 
   // Clear all markers
   const clearMarkers = useCallback(() => {

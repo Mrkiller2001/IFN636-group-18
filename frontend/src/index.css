@@ -1,3 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Karla:wght@400;600;700;800&family=Kreon:wght@400;600&display=swap');
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Global app styles to match Figma prototype defaults */
+html, body, #root {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: #ffffff;
+	color: #1F2937;
+	font-family: 'Karla', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	overflow-x: hidden;
+}
+
+/* Custom utility classes for the design system */
+.text-shadow-figma {
+	text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.24);
+}
+
+/* Mobile-first container */
+.mobile-container {
+	max-width: 393px;
+	margin: 0 auto;
+	min-height: 100vh;
+	background: white;
+	position: relative;
+	overflow: hidden;
+}
+
+/* Green color palette utilities */
+.bg-green-primary { background-color: #55ac62; }
+.bg-green-secondary { background-color: #3e974b; }
+.bg-green-accent { background-color: #086214; }
+.bg-green-light { background-color: #8bc193; }
+
+.text-green-primary { color: #55ac62; }
+.text-green-secondary { color: #3e974b; }
+.text-green-accent { color: #086214; }
+.text-green-light { color: #8bc193; }

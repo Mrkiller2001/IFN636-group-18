@@ -38,68 +38,41 @@ const simulateFill = async (b, value = 85) => {
 
 
   return (
-    <div className="overflow-x-auto bg-white shadow rounded">
-      <table className="min-w-full">
-        <thead className="bg-gray-50">
-          <tr className="text-left text-sm text-gray-600">
-            <th className="px-4 py-3">Name</th>
-            <th className="px-4 py-3">Type</th>
-            <th className="px-4 py-3">Capacity (L)</th>
-            <th className="px-4 py-3">Fill</th>
-            <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3">Last Reading</th>
-            <th className="px-4 py-3 w-50">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bins.map((b) => (
-            <tr key={b._id} className="border-t text-sm">
-              <td className="px-4 py-3">{b.name}</td>
-              <td className="px-4 py-3 capitalize">{b.type}</td>
-              <td className="px-4 py-3">{b.capacityLitres}</td>
-              <td className="px-4 py-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {bins.length === 0 && (
+        <div className="col-span-full text-center text-gray-500 py-8 bg-white shadow rounded">
+          No bins yet.
+        </div>
+      )}
+
+      {bins.map((b) => (
+        <div key={b._id} className="bg-white shadow rounded p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">{b.name}</h3>
+                <div className="text-sm text-gray-500 capitalize">{b.type}</div>
+              </div>
+              <div className="ml-4">
                 <FillBadge value={b.latestFillPct} />
-              </td>
-              <td className={`px-4 py-3 ${b.status === 'needs_pickup' ? 'text-red-600 font-medium' : ''}`}>
-                {b.status}
-              </td>
-              <td className="px-4 py-3">
-                {b.latestReadingAt ? new Date(b.latestReadingAt).toLocaleString() : '-'}
-              </td>
-              <td className="px-4 py-3">
-                <Link to={`/bins/${b._id}/history`} className="mr-2 px-3 py-1 rounded border hover:bg-gray-50">
-                History
-                </Link>
-                <button
-                  onClick={() => setEditingBin(b)}
-                  className="mr-2 px-3 py-1 rounded border hover:bg-gray-50"
-                >
-                  Edit
-                </button>
-                <button
-                onClick={() => simulateFill(b, 85)}
-                className="mr-2 px-3 py-1 rounded border hover:bg-gray-50"
-                >
-                Mark 85%
-                </button>
-                <button
-                  onClick={() => remove(b._id)}
-                  className="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-          {!bins.length && (
-            <tr>
-              <td colSpan="7" className="px-4 py-6 text-center text-gray-500">
-                No bins yet.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+              </div>
+            </div>
+
+            <div className="mt-3 text-sm text-gray-600">
+              <div>Capacity: <span className="font-medium">{b.capacityLitres} L</span></div>
+              <div className={`mt-1 ${b.status === 'needs_pickup' ? 'text-red-600 font-medium' : ''}`}>Status: {b.status}</div>
+              <div className="mt-1">Last reading: {b.latestReadingAt ? new Date(b.latestReadingAt).toLocaleString() : '-'}</div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center gap-2">
+            <Link to={`/bins/${b._id}/history`} className="text-sm px-3 py-1 rounded border hover:bg-gray-50">History</Link>
+            <button onClick={() => setEditingBin(b)} className="text-sm px-3 py-1 rounded border hover:bg-gray-50">Edit</button>
+            <button onClick={() => simulateFill(b, 85)} className="text-sm px-3 py-1 rounded border hover:bg-gray-50">Mark 85%</button>
+            <button onClick={() => remove(b._id)} className="ml-auto text-sm px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700">Delete</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -50,7 +50,7 @@ describe('Bins Controller - Ticket 2.1', () => {
       expect(res.json.called).to.be.true;
     });
     it('should return 403 if user is not authorized', async () => {
-      const req = { user: null, body: { name: 'X', location: { lat: 0, lng: 0 } } };
+      const req = { user: null, body: { name: 'X', location: { type: 'Point', coordinates: [0, 0] } } };
       const res = makeRes();
       await addBin(req, res);
       expect(res.status.calledWith(403)).to.be.true;
@@ -65,7 +65,7 @@ describe('Bins Controller - Ticket 2.1', () => {
           name: 'King & Ann',
           type: 'recycle',
           capacityLitres: 240,
-          location: { lat: -27.462, lng: 153.028 },
+          location: { type: 'Point', coordinates: [153.028, -27.462] },
           installedAt: '2024-01-15'
         }
       };
@@ -81,7 +81,7 @@ describe('Bins Controller - Ticket 2.1', () => {
         name: 'King & Ann',
         type: 'recycle',
         capacityLitres: 240,
-        location: { lat: -27.462, lng: 153.028 },
+        location: { type: 'Point', coordinates: [153.028, -27.462] },
         installedAt: '2024-01-15',
         status: 'normal',
         latestFillPct: 0
@@ -95,7 +95,7 @@ describe('Bins Controller - Ticket 2.1', () => {
       const userId = new mongoose.Types.ObjectId().toString();
       const req = {
         user: { id: userId },
-        body: { name: 'X', type: 'general', capacityLitres: 120, location: { lat: 0, lng: 0 } }
+        body: { name: 'X', type: 'general', capacityLitres: 120, location: { type: 'Point', coordinates: [0, 0] } }
       };
 
       const createStub = sinon.stub(Bin, 'create').throws(new Error('DB Error'));
@@ -239,7 +239,7 @@ describe('Bins Controller - Ticket 2.1', () => {
         name: 'Old Name',
         type: 'general',
         capacityLitres: 100,
-        location: { lat: 0, lng: 0 },
+        location: { type: 'Point', coordinates: [0, 0] },
         status: 'normal',
         installedAt: new Date(),
         save: sinon.stub().resolvesThis()

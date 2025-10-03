@@ -84,7 +84,17 @@ export default function MapComponent({
     return () => {
       if (mapInstance.current) {
         try {
-          clearMarkers(); // Clear all markers before removing map
+          // Clear all markers before removing map
+          [...markersRef.current, ...binMarkersRef.current, ...truckMarkersRef.current, ...routeMarkersRef.current].forEach(marker => {
+            if (marker && mapInstance.current) {
+              try {
+                mapInstance.current.removeLayer(marker);
+              } catch (error) {
+                // Ignore errors if layer is already removed
+              }
+            }
+          });
+          
           mapInstance.current.remove();
         } catch (error) {
           console.warn('Error cleaning up map:', error);

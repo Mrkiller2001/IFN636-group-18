@@ -1,27 +1,22 @@
 import React from 'react';
 
 export default function FillBadge({ value }) {
+  // Use Tailwind utility classes instead of inline styles so colors come from theme
   if (value === undefined || value === null) {
-    return <span style={pill('#6b7280')}>-</span>; // grey
+    return (
+      <span className="inline-block px-3 py-1 rounded-full bg-gray-400 text-white text-sm min-w-[36px] text-center">
+        -
+      </span>
+    );
   }
 
-  let bg = '#16a34a'; // green
-  if (value >= 80) bg = '#dc2626';       // red
-  else if (value >= 60) bg = '#d97706';  // amber
+  let colorClass = 'bg-green-500';
+  if (value >= 80) colorClass = 'bg-red-600';
+  else if (value >= 60) colorClass = 'bg-amber-500';
 
-  return <span style={pill(bg)}>{value}%</span>;
-}
-
-function pill(bg) {
-  return {
-    display: 'inline-block',
-    padding: '2px 10px',
-    borderRadius: 999,
-    background: bg,
-    color: '#fff',
-    fontSize: 12,
-    lineHeight: '18px',
-    minWidth: 36,
-    textAlign: 'center'
-  };
+  return (
+    <span className={`inline-block px-3 py-1 rounded-full text-white text-sm min-w-[36px] text-center ${colorClass}`}>
+      {value}%
+    </span>
+  );
 }

@@ -3,11 +3,14 @@ const Bin = require('../models/Bin');
 // GET /api/bins
 const getBins = async (req, res) => {
   try {
+    // 403 if user not authorized
+    if (!req.user || !req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
     const { type, status } = req.query;
     const filter = { userId: req.user.id };
     if (type) filter.type = type;
     if (status) filter.status = status;
-
     const bins = await Bin.find(filter).sort({ createdAt: -1 });
     res.json(bins);
   } catch (error) {
@@ -17,24 +20,49 @@ const getBins = async (req, res) => {
 
 // POST /api/bins
 const addBin = async (req, res) => {
-  const { name, type, capacityLitres, location, installedAt } = req.body;
   try {
-    const bin = await Bin.create({
-      userId: req.user.id,
-      name,
-      type,
-      capacityLitres,
-      location,          // { lat, lng }
-      installedAt,
-      status: 'normal',
-      latestFillPct: 0
-    });
+    // 403 if user not authorized
+    if (!req.user || !req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+    const { name, location, template, ...otherFields } = req.body;
+    const userId = req.user.id;
+    // 400 if required fields missing
+    if (!name || !location) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    let payload;
+    if (template) {
+      payload = cloneBinTemplate(template, { userId, name, location, ...otherFields });
+    } else {
+      payload = {
+        userId,
+        name,
+        location,
+        ...otherFields,
+        status: 'normal',
+        latestFillPct: 0
+      };
+    }
+    let bin = await Bin.create(payload);
+    // Command Pattern for bin actions
+    const BinActionCommand = require('../patterns/command/BinActionCommand');
+    // Example: set bin status using Command pattern after creation
+    const action = req.body.action; // e.g., 'pickup', 'empty', 'out_of_service'
+    if (action) {
+      const command = new BinActionCommand(action, bin);
+      bin = command.execute();
+      // Use State pattern for bin status transitions
+      const BinState = require('../patterns/state/BinState');
+      const state = new BinState(bin);
+      bin = state.setState(bin.status);
+      await bin.save();
+    }
     res.status(201).json(bin);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 // GET /api/bins/:id
 const getBin = async (req, res) => {
   try {

@@ -16,6 +16,8 @@
   "license": "ISC",
   "dependencies": {
     "mongodb": "^6.18.0",
-    "recharts": "^3.1.2"
+    "recharts": "^3.1.2",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   }
 }

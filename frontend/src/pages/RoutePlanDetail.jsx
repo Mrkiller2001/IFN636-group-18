@@ -35,7 +35,7 @@ export default function RoutePlanDetail() {
           <h1 className="text-2xl font-semibold">Route Plan</h1>
           {plan && (
             <p className="text-gray-600 text-sm">
-              Created: {new Date(plan.createdAt).toLocaleString()} · Stops: {plan.stops?.length ?? 0} · Total: {(plan.totalDistanceKm ?? 0).toFixed?.(3) ?? plan.totalDistanceKm} km
+              Created: {new Date(plan.createdAt).toLocaleString()} · Stops: {plan.stops?.length ?? 0} · Total: {typeof plan.totalDistanceKm === 'number' ? plan.totalDistanceKm.toFixed(3) : '0.000'} km
             </p>
           )}
         </div>

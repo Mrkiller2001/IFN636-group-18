@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -23,7 +23,6 @@ export default function MapComponent({
 }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
-  const markersRef = useRef([]);
   const binMarkersRef = useRef([]);
   const truckMarkersRef = useRef([]);
   const routeMarkersRef = useRef([]);

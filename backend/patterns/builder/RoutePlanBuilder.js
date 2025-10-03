@@ -23,7 +23,10 @@ class RoutePlanBuilder {
   }
 
   setDepot(lat, lng) {
-    this.routePlan.depot = { lat, lng };
+    this.routePlan.depot = {
+      type: 'Point',
+      coordinates: [lng, lat] // GeoJSON format: [longitude, latitude]
+    };
     return this;
   }
 

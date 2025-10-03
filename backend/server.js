@@ -22,6 +22,16 @@ app.use('/api/sensor-readings', require('./routes/sensorRoutes'));
 app.use('/api/routes', require('./routes/routePlanRoutes'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+// Health check endpoint for CI/CD
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Export the app object for testing
 if (require.main === module) {
     connectDB();

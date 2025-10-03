@@ -9,18 +9,21 @@ servers:
 
 components:
   schemas:
-    Location:
+    GeoJSONPoint:
       type: object
       properties:
-        lat:
-          type: number
-          format: float
-          description: Latitude
-        lng:
-          type: number
-          format: float
-          description: Longitude
-      required: [lat, lng]
+        type:
+          type: string
+          enum: [Point]
+          description: GeoJSON type
+        coordinates:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+          description: GeoJSON coordinates [longitude, latitude]
+      required: [type, coordinates]
 
     User:
       type: object
@@ -56,7 +59,7 @@ components:
         capacityLitres:
           type: number
         location:
-          $ref: '#/components/schemas/Location'
+          $ref: '#/components/schemas/GeoJSONPoint'
         status:
           type: string
           enum: [normal, needs_pickup, out_of_service]
@@ -95,7 +98,7 @@ components:
           type: string
           description: The name of the bin.
         location:
-          $ref: '#/components/schemas/Location'
+          $ref: '#/components/schemas/GeoJSONPoint'
         distanceFromPrevKm:
           type: number
 
@@ -107,7 +110,7 @@ components:
         userId:
           type: string
         depot:
-          $ref: '#/components/schemas/Location'
+          $ref: '#/components/schemas/GeoJSONPoint'
         threshold:
           type: number
         maxStops:
@@ -270,7 +273,8 @@ paths:
                 name: { type: string }
                 type: { type: string }
                 capacityLitres: { type: number }
-                location: { $ref: '#/components/schemas/Location' }
+                location: { $ref: '#/components/schemas/GeoJSONPoint' }
+                address: { type: string, description: "Human-readable address" }
                 template: { type: object, description: "Optional template to clone from (Prototype Pattern)" }
       responses:
         '201':
@@ -357,7 +361,8 @@ paths:
             schema:
               type: object
               properties:
-                depot: { $ref: '#/components/schemas/Location' }
+                name: { type: string, description: "Route plan name" }
+                depot: { $ref: '#/components/schemas/GeoJSONPoint' }
                 threshold: { type: number, default: 80 }
                 maxStops: { type: integer }
                 strategyName: { type: string, enum: [ShortestDistance, OverflowAware], default: ShortestDistance }

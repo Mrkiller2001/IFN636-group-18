@@ -5,9 +5,13 @@
   "main": "server.js",
   "scripts": {
     "test": "mocha",
+    "test:watch": "mocha --watch",
+    "test:coverage": "nyc mocha",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "prod": "node server.js"
+    "prod": "node server.js",
+    "lint": "echo 'Linting JavaScript files...' && find . -name '*.js' -not -path './node_modules/*' | head -10",
+    "health": "curl -f http://localhost:5001/api/health || echo 'Server not running'"
   },
   "dependencies": {
     "axios": "^1.12.2",

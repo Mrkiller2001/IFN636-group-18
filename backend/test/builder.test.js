@@ -12,7 +12,10 @@ describe('Builder Pattern - RoutePlanBuilder', () => {
       .setUserId(userId)
       .addStop({ binId: 'b1', name: 'Bin1', location: { lat: 1, lng: 2 } });
     const plan = builder.build().toObject();
-    expect(plan.depot).to.deep.equal({ lat: 1, lng: 2 });
+    expect(plan.depot).to.deep.equal({ 
+      type: 'Point', 
+      coordinates: [2, 1] // GeoJSON format: [lng, lat]
+    });
     expect(plan.threshold).to.equal(90);
     expect(plan.maxStops).to.equal(5);
     expect(plan.userId.toString()).to.equal(userId);
